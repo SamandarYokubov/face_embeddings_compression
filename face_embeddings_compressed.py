@@ -1,6 +1,3 @@
-from ast import Add
-from subprocess import NORMAL_PRIORITY_CLASS
-from tkinter.messagebox import showerror
 import faiss
 import time
 import pickle
@@ -13,26 +10,12 @@ import random
 
 
 
-# TODO: make baisc working code
-# TODO: check values of arguments of methods 
-# TODO: think about new names of methods
-
-
-
-# fin optim params steps:
-# - expr nlist and nprobe
-# - expr nbits
-# - expr n_subquantizers    
-
-
-
-
 # class to make some compression-related experiments
 
 class FaceEmbeddingsCompression:
 
     def __init__(self, embeddings_dimension:int, embeddings_path:str, 
-                 train_list_path:str, test_list_path:str, use_gpu=False):
+                 train_list_path:str, test_list_path:str):
         self.embeddings_path = embeddings_path
         self.train_list_path = train_list_path
         self.test_list_path = test_list_path
@@ -41,10 +24,6 @@ class FaceEmbeddingsCompression:
         self.train_vectors_info = None
         self.test_vectors = None
         self.test_vectors_info = None
-        self.use_gpu = use_gpu
-        if self.use_gpu:
-            self.gpu_resources = faiss.StandardGpuResources() # use a single GPU
-        # creating default values for paramters of index
         self.n_bits_values = list(range(1, 9, 1))
         self.n_subquantizers_values = [i for i in range(2, self.emb_dim) if self.emb_dim % i == 0]
         self.n_list_values = [i for i in range(20, 301, 20)]
@@ -105,11 +84,6 @@ class FaceEmbeddingsCompression:
 
         quantizer = faiss.IndexFlatIP(self.emb_dim)
         index = faiss.IndexIVFPQ(quantizer, self.emb_dim, n_list, n_subquantizers, n_bits)
-
-        if self.use_gpu:            
-            co = faiss.GpuClonerOptions()
-            co.useFloat16 = True
-            index = faiss.index_cpu_to_gpu(self.gpu_resources, 0, index, co)
 
         assert not index.is_trained
         train_start_time = time.time()
@@ -346,9 +320,10 @@ class FaceEmbeddingsCompression:
         report["n_list"] = optim_n_list
         report["n_subquantizers"] = optim_n_subquantizers
         report["n_bits"] = optim_n_bits
+        if show_process: print(f"Find optim params report:\n{report}")
         return report
 
-    def big_expr(self, nn_quantity, threshold, show_process=False, plot_graph=False):
+    def find_params_until_threshold(self, nn_quantity, threshold, show_process=False, plot_graph=False):
 
         n_bits = random.choice(self.n_bits_values)
         n_subquantizers = random.choice(self.n_subquantizers_values)
@@ -360,7 +335,7 @@ class FaceEmbeddingsCompression:
         history = []
 
         previous_precision = 0
-        counter = 0
+        counter = 1
 
         while over_threshold:
             if show_process:
@@ -379,8 +354,28 @@ class FaceEmbeddingsCompression:
             counter += 1
         return history
 
+    def find_params_until_iterations(self, nn_quantity, iterations, show_process=False, plot_graph=False):
+        
+        n_bits = random.choice(self.n_bits_values)
+        n_subquantizers = random.choice(self.n_subquantizers_values)
+        
+        if show_process:
+            print(f"Starting experiment...\nRandom values of n_bits={n_bits} and n_subquantizers={n_subquantizers}")
+        
+        history = []
 
-
+        
+        for i in range(iterations):
+            if show_process:
+                print("-"*15)
+                print(f"Iteration #{i+1}")
+            
+            report = self.find_optim_params(nn_quantity, n_bits, n_subquantizers, show_process, plot_graph)            
+            n_bits = report["n_bits"]
+            n_subquantizers = report["n_subquantizers"]            
+            history.append(report)
+            
+        return history 
 
 
 

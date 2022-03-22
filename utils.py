@@ -2,6 +2,7 @@ import faiss
 import pickle
 import os
 import numpy as np
+import random
 
 
 
@@ -84,8 +85,9 @@ def precision_top_n(I, test_vectors_data, train_vectors_data, n):
             neighbor_info = neighbor_info.split("/") 
             neighbors_info[j] = neighbor_info[0]
         if test_vector_info_class in neighbors_info:
-            matchs += 1
-    precision = matchs / float(test_vectors_data.shape[0])
+            matchs += 1  
+        
+    precision = float(matchs / test_vectors_data.shape[0])
     return precision   
 
 
