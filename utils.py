@@ -100,3 +100,4 @@ def get_memory(index):
     # delete saved index
     os.remove('./temp.index')
     return file_size / 1e6
+

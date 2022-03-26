@@ -1,3 +1,4 @@
+
 import faiss
 import time
 import pickle
@@ -30,17 +31,35 @@ class FaceEmbeddingsCompression:
 
 
     def set_parameter_values(self, parameter_name:str, values:list):
-        if parameter_name == "n_bits_values":
+        if parameter_name == "n_bits":
             self.n_list_values = values    
-        elif parameter_name == "n_subquantizers_values":
+        elif parameter_name == "n_subquantizers":
             self.n_subquantizers_values = values    
-        elif parameter_name == "n_list_values":
+        elif parameter_name == "n_lists":
             self.n_list_values = values
         else:
             print("Parameter name is not recognized!")
             exit()
 
+        
     
+    def get_parameter_values(self, parameter_name:str):
+        result = {}
+        if parameter_name == "n_bits":
+            result[parameter_name] = self.n_bits_values
+        elif parameter_name == "n_subquantizers":
+            result[parameter_name] = self.n_subquantizers_values
+        elif parameter_name == "n_lists":
+            result[parameter_name] = self.n_list_values
+        elif parameter_name == "all":
+            result.update(self.get_parameter_values("n_bits"))
+            result.update(self.get_parameter_values("n_subquantizers"))
+            result.update(self.get_parameter_values("n_lists"))
+        else:
+            print("Parameter name is not recognized!")
+        
+        return result
+        
 
 
     def load_embeddings(self):
@@ -306,31 +325,31 @@ class FaceEmbeddingsCompression:
 
 
 
-    # TODO: check the correctness on LFW 
+    
     def find_optim_params(self, nn_quantity, n_bits, n_subquantizers, show_process=False, plot_graph=False):
-
-        report = self.n_list_nprobe_expr(nn_quantity, n_subquantizers, n_bits, show_process=show_process, plot_graph=True)
-        optim_n_list = report["n_list"]
-        optim_n_probe = report["n_probe"]
-        report = self.n_subquantizers_expr(nn_quantity, optim_n_list, optim_n_probe, n_bits, show_process=show_process, plot_graph=plot_graph)
-        optim_n_subquantizers = report["n_subquantizers"]
-        report = self.nbits_expr(nn_quantity, optim_n_list, optim_n_probe, optim_n_subquantizers, show_process=show_process, plot_graph=plot_graph)
-        optim_n_bits = report["n_bits"]
-        report = self.index_ivfpq(nn_quantity, optim_n_list, optim_n_probe, optim_n_subquantizers, optim_n_bits, show_index_info=show_process)
-        report["n_list"] = optim_n_list
-        report["n_subquantizers"] = optim_n_subquantizers
-        report["n_bits"] = optim_n_bits
-        if show_process: print(f"Find optim params report:\n{report}")
-        return report
+        
+        if show_process:
+            print(f"Finding optim parameters\nInitial values: {n_bits=} {n_subquantizers=}")
+            
+        report_n_list_n_probe = self.n_list_nprobe_expr(nn_quantity, n_subquantizers, n_bits, show_process=show_process, plot_graph=True)
+        optim_n_list = report_n_list_n_probe["n_list"]
+        optim_n_probe = report_n_list_n_probe["n_probe"]
+        report_n_subquantizers = self.n_subquantizers_expr(nn_quantity, optim_n_list, optim_n_probe, n_bits, show_process=show_process, plot_graph=plot_graph)
+        optim_n_subquantizers = report_n_subquantizers["n_subquantizers"]
+        report_nbits = self.nbits_expr(nn_quantity, optim_n_list, optim_n_probe, optim_n_subquantizers, show_process=show_process, plot_graph=plot_graph)
+        optim_n_bits = report_nbits["n_bits"]
+        report_optim = self.index_ivfpq(nn_quantity, optim_n_list, optim_n_probe, optim_n_subquantizers, optim_n_bits, show_index_info=show_process)
+        report_optim["n_list"] = optim_n_list
+        report_optim["n_subquantizers"] = optim_n_subquantizers
+        report_optim["n_bits"] = optim_n_bits
+        if show_process: print(f"Find optim params report:\n{report_optim}")
+        return report_optim
 
     def find_params_until_threshold(self, nn_quantity, threshold, show_process=False, plot_graph=False):
 
         n_bits = random.choice(self.n_bits_values)
-        n_subquantizers = random.choice(self.n_subquantizers_values)
-        
-        if show_process:
-            print(f"Starting experiment...\nRandom values of n_bits={n_bits} and n_subquantizers={n_subquantizers}")
-        
+        n_subquantizers = random.choice(self.n_subquantizers_values)       
+
         over_threshold = True
         history = []
 
@@ -359,9 +378,6 @@ class FaceEmbeddingsCompression:
         n_bits = random.choice(self.n_bits_values)
         n_subquantizers = random.choice(self.n_subquantizers_values)
         
-        if show_process:
-            print(f"Starting experiment...\nRandom values of n_bits={n_bits} and n_subquantizers={n_subquantizers}")
-        
         history = []
 
         
@@ -377,6 +393,10 @@ class FaceEmbeddingsCompression:
             
         return history 
 
+
+
+
+    
 
 
 
