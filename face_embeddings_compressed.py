@@ -89,7 +89,8 @@ class FaceEmbeddingsCompression:
             print("Shape of D: {} and I: {} ".format(len(D), len(I)))
             print("Precision : {}".format(precision_value))
             print("Memory : {:.2f} MB".format(memory))
-
+        
+        
 
     def index_ivfpq(self, nn_quantity, n_list, n_probe_values, n_subquantizers,
                     n_bits, show_index_info=False):
@@ -334,10 +335,10 @@ class FaceEmbeddingsCompression:
         report_n_list_n_probe = self.n_list_nprobe_expr(nn_quantity, n_subquantizers, n_bits, show_process=show_process, plot_graph=True)
         optim_n_list = report_n_list_n_probe["n_list"]
         optim_n_probe = report_n_list_n_probe["n_probe"]
-        report_n_subquantizers = self.n_subquantizers_expr(nn_quantity, optim_n_list, optim_n_probe, n_bits, show_process=show_process, plot_graph=plot_graph)
-        optim_n_subquantizers = report_n_subquantizers["n_subquantizers"]
-        report_nbits = self.nbits_expr(nn_quantity, optim_n_list, optim_n_probe, optim_n_subquantizers, show_process=show_process, plot_graph=plot_graph)
+        report_nbits = self.nbits_expr(nn_quantity, optim_n_list, optim_n_probe, n_subquantizers, show_process=show_process, plot_graph=plot_graph)
         optim_n_bits = report_nbits["n_bits"]
+        report_n_subquantizers = self.n_subquantizers_expr(nn_quantity, optim_n_list, optim_n_probe, optim_n_bits, show_process=show_process, plot_graph=plot_graph)
+        optim_n_subquantizers = report_n_subquantizers["n_subquantizers"]
         report_optim = self.index_ivfpq(nn_quantity, optim_n_list, optim_n_probe, optim_n_subquantizers, optim_n_bits, show_index_info=show_process)
         report_optim["n_list"] = optim_n_list
         report_optim["n_subquantizers"] = optim_n_subquantizers
