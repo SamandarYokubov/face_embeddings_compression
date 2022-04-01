@@ -30,6 +30,8 @@ class FaceEmbeddingsCompression:
         self.n_list_values = [i for i in range(20, 301, 20)]
 
 
+    
+    # alter the set of possible values of paramaters of IVFPQ index
     def set_parameter_values(self, parameter_name:str, values:list):
         if parameter_name == "n_bits":
             self.n_list_values = values    
@@ -61,18 +63,20 @@ class FaceEmbeddingsCompression:
         return result
         
 
-
+    # load embeddings represented by embeddings file (use .pkl extension), train list (txt file) and test list (txt file)  
     def load_embeddings(self):
         self.train_vectors, self.test_vectors, self.train_vectors_info, self.test_vectors_info  = load_data(self.embeddings_path,
                                                                                                             self.train_list_path,
                                                                                                             self.test_list_path)
 
+    # if you have already split embeddings intwo train and test, then use the following type of load function
     def load_lfw(self, train_embeddings_path, test_embeddings_path, lfw_full_list_path):
         self.train_vectors, self.test_vectors, self.train_vectors_info, self.test_vectors_info  = load_lfw(train_embeddings_path,
                                                                                                            test_embeddings_path,
                                                                                                            lfw_full_list_path)
 
 
+    # simple type of index
     def index_without_compression(self, nn_quantity, show_index_info=False):
         index = faiss.IndexFlatIP(self.emb_dim)
         index.add(self.train_vectors)
@@ -91,7 +95,7 @@ class FaceEmbeddingsCompression:
             print("Memory : {:.2f} MB".format(memory))
         
         
-
+    # index that use Product Quantization  method to compress and Inverted FIle to search for embeddings
     def index_ivfpq(self, nn_quantity, n_list, n_probe_values, n_subquantizers,
                     n_bits, show_index_info=False):
 
@@ -164,6 +168,7 @@ class FaceEmbeddingsCompression:
         return report
     
 
+    # find optimal quantity of bits to encode subvectors
     def nbits_expr(self, nn_quantity, n_list, n_probe, n_subquantizers, show_process=False, plot_graph=False):  
 
         n_bits_expr_report = {}                
@@ -214,6 +219,8 @@ class FaceEmbeddingsCompression:
 
         return n_bits_expr_report
 
+
+    # find optimal number of subvectors
     def n_subquantizers_expr(self, nn_quantity, n_list, n_probe, n_bits, show_process=False, plot_graph=False):
         
         n_subquantizers_expr_report = {}
@@ -263,6 +270,8 @@ class FaceEmbeddingsCompression:
             
         return n_subquantizers_expr_report
 
+
+    # find optimal value of Voronoi cells along with the quantity of cells to look for during search process
     def n_list_nprobe_expr(self, nn_quantity, n_subquantizers, n_bits, show_process=False, plot_graph=False):
         
         n_list_nprobe_expr_report = {}
@@ -326,7 +335,7 @@ class FaceEmbeddingsCompression:
 
 
 
-    
+    # general method of finding optimal values of IVFPQ paramaters
     def find_optim_params(self, nn_quantity, n_bits, n_subquantizers, show_process=False, plot_graph=False):
         
         if show_process:
@@ -346,6 +355,9 @@ class FaceEmbeddingsCompression:
         if show_process: print(f"Find optim params report:\n{report_optim}")
         return report_optim
 
+
+
+    # iterative process of finding optimal values
     def find_params_until_threshold(self, nn_quantity, threshold, show_process=False, plot_graph=False):
 
         n_bits = random.choice(self.n_bits_values)
@@ -374,6 +386,8 @@ class FaceEmbeddingsCompression:
             counter += 1
         return history
 
+
+    # finding optimal values that satisfy threshold
     def find_params_until_iterations(self, nn_quantity, iterations, show_process=False, plot_graph=False):
         
         n_bits = random.choice(self.n_bits_values)
